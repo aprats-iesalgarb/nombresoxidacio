@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pràctica de Nombres d'Oxidació - 3r/4t ESO</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --panel-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --accent-color: #00bcd4;
+      --cell-bg: #2a2a2a;
+      --cell-border: #444444;
+      --correct-color: #2e7d32;
+      --incorrect-color: #c62828;
+      --selected-val: #ffb74d;
+      --metal-bg: #3a3225;
+      --semimetal-bg: #223a2a;
+      --nometal-bg: #1b3a38;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      color: var(--accent-color);
+    }
+
+    .mode-selector {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .mode-btn {
+      background-color: #333;
+      color: var(--text-color);
+      border: 1px solid var(--cell-border);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .mode-btn.active {
+      background-color: var(--accent-color);
+      color: #000;
+    }
+
+    main {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #quiz-panel {
+      background-color: var(--panel-bg);
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .active-element-card {
+      width: 80px;
+      height: 80px;
+      background-color: var(--accent-color);
+      color: #000;
+      font-size: 2.2rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .question-info h2 {
+      margin: 0 0 5px 0;
+      font-size: 1.3rem;
+    }
+
+    .valencies-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 650px;
+    }
+
+    .val-btn {
+      width: 48px;
+      height: 48px;
+      background-color: var(--cell-bg);
+      border: 2px solid var(--cell-border);
+      color: var(--text-color);
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .val-btn:hover {
+      border-color: var(--accent-color);
+    }
+
+    .val-btn.selected {
+      background-color: var(--selected-val);
+      color: #000;
+      border-color: #ffa726;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .btn-submit {
+      background-color: var(--accent-color);
+      color: #000;
+      border: none;
+      padding: 10px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-submit:hover {
+      filter: brightness(1.1);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 25px;
+      font-size: 1rem;
+      background-color: #151515;
+      padding: 8px 20px;
+      border-radius: 20px;
+    }
+
+    #feedback-msg {
+      min-height: 24px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .feedback-correct { color: #66bb6a; }
+    .feedback-wrong { color: #ef5350; }
+
+    /* Estructura de la Taula Periòdica */
+    #table-container {
+      overflow-x: auto;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    #periodic-table {
+      display: grid;
+      grid-template-columns: repeat(18, 52px);
+      grid-template-rows: repeat(7, 52px);
+      gap: 4px;
+      background-color: var(--panel-bg);
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .cell {
+      border: 1px solid var(--cell-border);
+      background-color: var(--cell-bg);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+
+    .cell.disabled {
+      border-color: transparent;
+      background-color: transparent;
+      cursor: default;
+    }
+
+    .cell.metal { background-color: var(--metal-bg); }
+    .cell.semimetal { background-color: var(--semimetal-bg); }
+    .cell.nometal { background-color: var(--nometal-bg); }
+
+    .cell.completed {
+      border: 2px solid #66bb6a;
+    }
+
+    .cell .val-sub {
+      font-size: 0.65rem;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    /* Animation */
+    .shake {
+      animation: shake 0.35s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    /* Modal Resultats */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background-color: var(--panel-bg);
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    }
+
+    .score-badge {
+      font-size: 3rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Pràctica de Nombres d'Oxidació</h1>
+    <p>Selecciona les valències/nombres d'oxidació corresponents a l'element indicat.</p>
+    
+    <div class="mode-selector">
+      <button id="mode-practice" class="mode-btn active" onclick="setMode('practice')">Mode Pràctica</button>
+      <button id="mode-study" class="mode-btn" onclick="setMode('study')">Mode Estudi / Consulta</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="quiz-panel">
+      <div class="question-header">
+        <div id="active-card" class="active-element-card">?</div>
+        <div class="question-info">
+          <h2 id="question-text">Quin és el nombre d'oxidació de l'element?</h2>
+          <div class="stats-bar">
+            <span>Restants: <b id="stat-remaining">0</b></span>
+            <span>Encerts: <b id="stat-score" style="color:#66bb6a">0</b></span>
+            <span>Errors: <b id="stat-errors" style="color:#ef5350">0</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="valencies-selector" id="valencies-selector">
+        <!-- Generat per JS -->
+      </div>
+
+      <div class="action-row">
+        <button id="btn-submit" class="btn-submit" onclick="checkAnswer()">Comprovar</button>
+        <button id="btn-restart" class="mode-btn" onclick="initGame()">Reiniciar</button>
+      </div>
+
+      <div id="feedback-msg"></div>
+    </section>
+
+    <section id="table-container">
+      <div id="periodic-table"></div>
+    </section>
+  </main>
+
+  <!-- Modal Final -->
+  <div id="modal-result" class="modal">
+    <div class="modal-content">
+      <h2>Activitat Completada! 🎉</h2>
+      <p>Has trobat els nombres d'oxidació de tots els elements.</p>
+      <div class="score-badge" id="final-score">0 / 10</div>
+      <p id="final-stats-text"></p>
+      <button class="btn-submit" onclick="closeModal(); initGame();" style="margin-top:15px;">Tornar a jugar</button>
+    </div>
+  </div>
+
+  <script>
+    // Dades dels elements basades estrictament en les regles de la imatge
+    const elementsData = [
+      // Període 1
+      { symbol: 'H', group: 1, period: 1, type: 'nometal', valencies: ['+1', '-1'], common: ['+1'], specific: ['-1'] },
+      
+      // Període 2
+      { symbol: 'Li', group: 1, period: 2, type: 'metal', valencies: ['+1'], common: ['+1'] },
+      { symbol: 'Be', group: 2, period: 2, type: 'metal', valencies: ['+2'], common: ['+2'] },
+      { symbol: 'B', group: 13, period: 2, type: 'semimetal', valencies: ['+3', '-3'], common: ['+3'], specific: ['-3'] },
+      { symbol: 'C', group: 14, period: 2, type: 'nometal', valencies: ['+2', '+4', '-4'], common: ['+2', '+4'], specific: ['-4'] },
+      { symbol: 'N', group: 15, period: 2, type: 'nometal', valencies: ['+3', '+5', '-3'], common: ['+3', '+5'], specific: ['-3'] },
+      { symbol: 'O', group: 16, period: 2, type: 'nometal', valencies: ['-2', '+2', '+4', '+6'], common: ['-2', '+2', '+4', '+6'] },
+      { symbol: 'F', group: 17, period: 2, type: 'nometal', valencies: ['-1', '+1', '+3', '+5', '+7'], common: ['-1', '+1', '+3', '+5', '+7'] },
+
+      // Període 3
+      { symbol: 'Na', group: 1, period: 3, type: 'metal', valencies: ['+1'], common: ['+1'] },
+      { symbol: 'Mg', group: 2, period: 3, type: 'metal', valencies: ['+2'], common: ['+2'] },
+      { symbol: 'Al', group: 13, period: 3, type: 'metal', valencies: ['+3'], common: ['+3'] },
+      { symbol: 'Si', group: 14, period: 3, type: 'semimetal', valencies: ['+2', '+4', '-4'], common: ['+2', '+4'], specific: ['-4'] },
+      { symbol: 'P', group: 15, period: 3, type: 'nometal', valencies: ['+3', '+5', '-3'], common: ['+3', '+5'], specific: ['-3'] },
+      { symbol: 'S', group: 16, period: 3, type: 'nometal', valencies: ['-2', '+2', '+4', '+6'], common: ['-2', '+2', '+4', '+6'] },
+      { symbol: 'Cl', group: 17, period: 3, type: 'nometal', valencies: ['-1', '+1', '+3', '+5', '+7'], common: ['-1', '+1', '+3', '+5', '+7'] },
+
+      // Període 4
+      { symbol: 'K', group: 1, period: 4, type: 'metal', valencies: ['+1'], common: ['+1'] },
+      { symbol: 'Ca', group: 2, period: 4, type: 'metal', valencies: ['+2'], common: ['+2'] },
+      { symbol: 'Cr', group: 6, period: 4, type: 'metal', valencies: ['+2', '+3', '+6'], specific: ['+2', '+3', '+6'] },
+      { symbol: 'Mn', group: 7, period: 4, type: 'metal', valencies: ['+2', '+3', '+4', '+6', '+7'], specific: ['+2', '+3', '+4', '+6', '+7'] },
+      { symbol: 'Fe', group: 8, period: 4, type: 'metal', valencies: ['+2', '+3'], specific: ['+2', '+3'] },
+      { symbol: 'Co', group: 9, period: 4, type: 'metal', valencies: ['+2', '+3'], specific: ['+2', '+3'] },
+      { symbol: 'Ni', group: 10, period: 4, type: 'metal', valencies: ['+2', '+3'], specific: ['+2', '+3'] },
+      { symbol: 'Cu', group: 11, period: 4, type: 'metal', valencies: ['+1', '+2'], specific: ['+1', '+2'] },
+      { symbol: 'Zn', group: 12, period: 4, type: 'metal', valencies: ['+2'], specific: ['+2'] },
+      { symbol: 'Ge', group: 14, period: 4, type: 'semimetal', valencies: ['+2', '+4', '-4'], common: ['+2', '+4'], specific: ['-4'] },
+      { symbol: 'As', group: 15, period: 4, type: 'semimetal', valencies: ['+3', '+5', '-3'], common: ['+3', '+5'], specific: ['-3'] },
+      { symbol: 'Se', group: 16, period: 4, type: 'nometal', valencies: ['-2', '+2', '+4', '+6'], common: ['-2', '+2', '+4', '+6'] },
+      { symbol: 'Br', group: 17, period: 4, type: 'nometal', valencies: ['-1', '+1', '+3', '+5', '+7'], common: ['-1', '+1', '+3', '+5', '+7'] },
+
+      // Període 5
+      { symbol: 'Rb', group: 1, period: 5, type: 'metal', valencies: ['+1'], common: ['+1'] },
+      { symbol: 'Sr', group: 2, period: 5, type: 'metal', valencies: ['+2'], common: ['+2'] },
+      { symbol: 'Pd', group: 10, period: 5, type: 'metal', valencies: ['+2', '+4'], specific: ['+2', '+4'] },
+      { symbol: 'Ag', group: 11, period: 5, type: 'metal', valencies: ['+1'], specific: ['+1'] },
+      { symbol: 'Cd', group: 12, period: 5, type: 'metal', valencies: ['+2'], specific: ['+2'] },
+      { symbol: 'Sn', group: 14, period: 5, type: 'metal', valencies: ['+2', '+4'], common: ['+2', '+4'] },
+      { symbol: 'Sb', group: 15, period: 5, type: 'semimetal', valencies: ['+3', '+5', '-3'], common: ['+3', '+5'], specific: ['-3'] },
+      { symbol: 'Te', group: 16, period: 5, type: 'semimetal', valencies: ['-2', '+2', '+4', '+6'], common: ['-2', '+2', '+4', '+6'] },
+      { symbol: 'I', group: 17, period: 5, type: 'nometal', valencies: ['-1', '+1', '+3', '+5', '+7'], common: ['-1', '+1', '+3', '+5', '+7'] },
+
+      // Període 6
+      { symbol: 'Cs', group: 1, period: 6, type: 'metal', valencies: ['+1'], common: ['+1'] },
+      { symbol: 'Ba', group: 2, period: 6, type: 'metal', valencies: ['+2'], common: ['+2'] },
+      { symbol: 'Pt', group: 10, period: 6, type: 'metal', valencies: ['+2', '+4'], specific: ['+2', '+4'] },
+      { symbol: 'Au', group: 11, period: 6, type: 'metal', valencies: ['+1', '+3'], specific: ['+1', '+3'] },
+      { symbol: 'Hg', group: 12, period: 6, type: 'metal', valencies: ['+1', '+2'], specific: ['+1', '+2'] },
+      { symbol: 'Pb', group: 14, period: 6, type: 'metal', valencies: ['+2', '+4'], common: ['+2', '+4'] },
+      { symbol: 'Bi', group: 15, period: 6, type: 'metal', valencies: ['+3', '+5', '-3'], common: ['+3', '+5'], specific: ['-3'] },
+      { symbol: 'At', group: 17, period: 6, type: 'nometal', valencies: ['-1', '+1', '+3', '+5', '+7'], common: ['-1', '+1', '+3', '+5', '+7'] },
+
+      // Període 7
+      { symbol: 'Fr', group: 1, period: 7, type: 'metal', valencies: ['+1'], common: ['+1'] },
+      { symbol: 'Ra', group: 2, period: 7, type: 'metal', valencies: ['+2'], common: ['+2'] }
+    ];
+
+    const possibleValencies = ['-4', '-3', '-2', '-1', '+1', '+2', '+3', '+4', '+5', '+6', '+7'];
+
+    let currentMode = 'practice'; // 'practice' o 'study'
+    let remainingQueue = [];
+    let currentElement = null;
+    let selectedValencies = new Set();
+    let score = 0;
+    let errors = 0;
+    let completedElements = new Set();
+
+    // Elements DOM
+    const activeCard = document.getElementById('active-card');
+    const questionText = document.getElementById('question-text');
+    const valenciesSelector = document.getElementById('valencies-selector');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const statRemaining = document.getElementById('stat-remaining');
+    const statScore = document.getElementById('stat-score');
+    const statErrors = document.getElementById('stat-errors');
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('mode-practice').classList.toggle('active', mode === 'practice');
+      document.getElementById('mode-study').classList.toggle('active', mode === 'study');
+
+      if (mode === 'study') {
+        questionText.textContent = "Mode Estudi: Clica qualsevol element de la taula per veure les seves valències.";
+        activeCard.textContent = "🔍";
+        document.getElementById('btn-submit').style.display = 'none';
+        feedbackMsg.textContent = "";
+      } else {
+        document.getElementById('btn-submit').style.display = 'inline-block';
+        initGame();
+      }
+    }
+
+    function renderValencyButtons() {
+      valenciesSelector.innerHTML = '';
+      possibleValencies.forEach(val => {
+        const btn = document.createElement('button');
+        btn.classList.add('val-btn');
+        btn.textContent = val;
+        btn.onclick = () => toggleValency(val, btn);
+        valenciesSelector.appendChild(btn);
+      });
+    }
+
+    function toggleValency(val, btn) {
+      if (selectedValencies.has(val)) {
+        selectedValencies.delete(val);
+        btn.classList.remove('selected');
+      } else {
+        selectedValencies.add(val);
+        btn.classList.add('selected');
+      }
+    }
+
+    function clearSelections() {
+      selectedValencies.clear();
+      document.querySelectorAll('.val-btn').forEach(btn => btn.classList.remove('selected'));
+    }
+
+    function initGame() {
+      score = 0;
+      errors = 0;
+      completedElements.clear();
+      statScore.textContent = score;
+      statErrors.textContent = errors;
+      feedbackMsg.textContent = "";
+
+      remainingQueue = [...elementsData].sort(() => Math.random() - 0.5);
+      renderValencyButtons();
+      buildTable();
+      nextTurn();
+    }
+
+    function buildTable() {
+      const table = document.getElementById('periodic-table');
+      table.innerHTML = '';
+
+      const elementMap = new Map();
+      elementsData.forEach(el => elementMap.set(`${el.period}-${el.group}`, el));
+
+      for (let r = 1; r <= 7; r++) {
+        for (let c = 1; c <= 18; c++) {
+          const key = `${r}-${c}`;
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+
+          if (elementMap.has(key)) {
+            const el = elementMap.get(key);
+            cell.classList.add(el.type);
+            cell.id = `cell-${el.symbol}`;
+            cell.innerHTML = `<span>${el.symbol}</span>`;
+            cell.onclick = () => handleCellClick(el);
+          } else {
+            cell.classList.add('disabled');
+          }
+
+          table.appendChild(cell);
+        }
+      }
+    }
+
+    function handleCellClick(el) {
+      if (currentMode === 'study') {
+        activeCard.textContent = el.symbol;
+        let info = `Valències de ${el.symbol}: ${el.valencies.join(', ')}`;
+        if (el.common) info += ` (Comuns de grup: ${el.common.join(', ')})`;
+        if (el.specific) info += ` (Específiques: ${el.specific.join(', ')})`;
+        questionText.textContent = info;
+      }
+    }
+
+    function nextTurn() {
+      clearSelections();
+      feedbackMsg.textContent = "";
+
+      statRemaining.textContent = remainingQueue.length;
+
+      if (remainingQueue.length === 0) {
+        showFinalModal();
+        return;
+      }
+
+      currentElement = remainingQueue[remainingQueue.length - 1];
+      activeCard.textContent = currentElement.symbol;
+      questionText.textContent = `Nombres d'oxidació per a: ${currentElement.symbol}`;
+    }
+
+    function checkAnswer() {
+      if (currentMode !== 'practice' || !currentElement) return;
+
+      const userVals = Array.from(selectedValencies).sort();
+      const correctVals = [...currentElement.valencies].sort();
+
+      const isCorrect = userVals.length === correctVals.length &&
+                        userVals.every((val, idx) => val === correctVals[idx]);
+
+      const panel = document.getElementById('quiz-panel');
+
+      if (isCorrect) {
+        score++;
+        statScore.textContent = score;
+        feedbackMsg.className = "feedback-correct";
+        feedbackMsg.textContent = `Correcte! ${currentElement.symbol} té les valències: ${correctVals.join(', ')}`;
+
+        // Marcar element com completat a la taula
+        const cell = document.getElementById(`cell-${currentElement.symbol}`);
+        if (cell) {
+          cell.classList.add('completed');
+          cell.innerHTML = `<span>${currentElement.symbol}</span><span class="val-sub">${correctVals.join(',')}</span>`;
+        }
+
+        completedElements.add(currentElement.symbol);
+        remainingQueue.pop();
+
+        setTimeout(nextTurn, 1200);
+      } else {
+        errors++;
+        statErrors.textContent = errors;
+        feedbackMsg.className = "feedback-wrong";
+        feedbackMsg.textContent = `Incorrecte! Revisa les valències comunes de grup i les específiques.`;
+        
+        panel.classList.add('shake');
+        setTimeout(() => panel.classList.remove('shake'), 400);
+      }
+    }
+
+    function showFinalModal() {
+      const modal = document.getElementById('modal-result');
+      const finalScore = document.getElementById('final-score');
+      const finalStats = document.getElementById('final-stats-text');
+
+      const totalQuestions = elementsData.length;
+      const note = Math.max(0, ((score / (score + errors)) * 10)).toFixed(1);
+
+      finalScore.textContent = `${note} / 10`;
+      finalStats.textContent = `Encerts: ${score} | Errors totals: ${errors}`;
+
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-result').style.display = 'none';
+    }
+
+    // Iniciar joc al carregar
+    initGame();
+  </script>
+</body>
+</html>

@@ -1,2 +1,2 @@
 # nombresoxidacio
-Nombres d'oxdicació
+Nombres d'oxidació
